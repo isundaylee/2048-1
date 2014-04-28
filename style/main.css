@@ -489,7 +489,7 @@ hr {
 .buttons {
   overflow: auto; }
 
-.restart-button, .record-button {
+.restart-button, .record-button, .undo-button {
   display: inline-block;
   background: #8f7a66;
   border-radius: 3px;

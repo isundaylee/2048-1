@@ -12,6 +12,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.inputManager.on("restart", this.restart.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
   this.inputManager.on("copyRecord", this.copyRecord.bind(this));
+  this.inputManager.on("undo", this.undo.bind(this));
 
   this.setup();
 }
@@ -22,6 +23,51 @@ GameManager.prototype.restart = function () {
   this.actuator.continueGame(); // Clear the game won/lost message
   this.setup();
 };
+
+// Replay a record
+GameManager.prototype.replay = function(record) {
+  var i;
+
+  this.storageManager.clearGameState();
+  this.actuator.continueGame();
+  this.setup(false);
+
+  for (i = 0; i < record.length; ++i) {
+    var current_step = record[i];
+
+    if (current_step.t == 'a') {
+      // Tile addition
+      this.record.push(current_step);
+      this.grid.insertTile(new Tile({x: current_step.x, y: current_step.y}, current_step.v));
+    } else {
+      // Tile move
+      var next_step = record[i + 1];
+
+      this.move(current_step.d, true, next_step);
+    }
+  }
+
+  this.actuate();
+}
+
+// Undo one step
+GameManager.prototype.undo = function() {
+  var record = this.record;
+  var i;
+
+  // Undo does nothing if no move has been made
+  var last_move = record.length;
+
+  for (i = record.length - 1; i >= 0; --i) {
+    if (record[i].t == 'm') {
+      last_move = i;
+      break;
+    }
+  }
+
+  this.replay(record.slice(0, last_move));
+
+}
 
 // Keep playing after winning (allows going over 2048)
 GameManager.prototype.keepPlaying = function () {
@@ -39,8 +85,11 @@ GameManager.prototype.copyRecord = function () {
 };
 
 // Set up the game
-GameManager.prototype.setup = function () {
+GameManager.prototype.setup = function (add_initial_tiles) {
   var previousState = this.storageManager.getGameState();
+
+  if (typeof(add_initial_tiles) === 'undefined')
+    add_initial_tiles = true;
 
   // Reload the game from a previous game if present
   if (previousState) {
@@ -60,7 +109,8 @@ GameManager.prototype.setup = function () {
     this.keepPlaying = false;
 
     // Add the initial tiles
-    this.addStartTiles();
+    if (add_initial_tiles)
+      this.addStartTiles();
   }
 
   // Update the actuator
@@ -144,7 +194,11 @@ GameManager.prototype.moveTile = function (tile, cell) {
 };
 
 // Move tiles on the grid in the specified direction
-GameManager.prototype.move = function (direction) {
+GameManager.prototype.move = function (direction, playback, add_record) {
+  // Defaults not to playback mode
+  if (typeof(playback) === 'undefined')
+    playback = false;
+
   // 0: up, 1: right, 2: down, 3: left
   var self = this;
 
@@ -202,13 +256,21 @@ GameManager.prototype.move = function (direction) {
   });
 
   if (moved) {
-    this.addRandomTile();
+    if (!playback) {
+      this.addRandomTile();
+    } else {
+      var tile = new Tile({x: add_record.x, y: add_record.y}, add_record.value);
+
+      this.record.push(add_record);
+      this.grid.insertTile(tile);
+    }
 
     if (!this.movesAvailable()) {
       this.over = true; // Game over!
     }
 
-    this.actuate();
+    if (!playback)
+      this.actuate();
   }
 };
 
