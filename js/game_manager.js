@@ -76,10 +76,10 @@ GameManager.prototype.addRandomTile = function () {
     var tile = new Tile(this.grid.randomAvailableCell(), value);
 
     window.gameRecord.push({
-      type: 'add',
+      t: 'a',
       x: tile.x,
       y: tile.y,
-      value: tile.value
+      v: tile.value
     });
 
     this.grid.insertTile(tile);
@@ -152,8 +152,8 @@ GameManager.prototype.move = function (direction) {
   var moved      = false;
 
   window.gameRecord.push({
-    type: 'move',
-    direction: direction
+    t: 'm',
+    d: direction
   });
 
   // Save the current tile positions and remove merger information
