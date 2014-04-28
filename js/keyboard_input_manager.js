@@ -71,6 +71,7 @@ KeyboardInputManager.prototype.listen = function () {
   // Respond to button presses
   this.bindButtonPress(".retry-button", this.restart);
   this.bindButtonPress(".restart-button", this.restart);
+  this.bindButtonPress(".record-button", this.copyRecord)
   this.bindButtonPress(".keep-playing-button", this.keepPlaying);
 
   // Respond to swipe events
@@ -131,6 +132,10 @@ KeyboardInputManager.prototype.restart = function (event) {
   event.preventDefault();
   this.emit("restart");
 };
+
+KeyboardInputManager.prototype.copyRecord = function (event) {
+  window.prompt("The record so far: ", btoa(JSON.stringify(window.gameRecord)));
+}
 
 KeyboardInputManager.prototype.keepPlaying = function (event) {
   event.preventDefault();
