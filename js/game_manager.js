@@ -1,5 +1,5 @@
 function GameManager(size, InputManager, Actuator, StorageManager) {
-  window.gameRecord   = []
+  this.record     = []
 
   this.size           = size; // Size of the grid
   this.inputManager   = new InputManager;
@@ -11,6 +11,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
+  this.inputManager.on("copyRecord", this.copyRecord.bind(this));
 
   this.setup();
 }
@@ -33,6 +34,10 @@ GameManager.prototype.isGameTerminated = function () {
   return this.over || (this.won && !this.keepPlaying);
 };
 
+GameManager.prototype.copyRecord = function () {
+  window.prompt('Record so far: ', btoa(JSON.stringify(this.record)));
+};
+
 // Set up the game
 GameManager.prototype.setup = function () {
   var previousState = this.storageManager.getGameState();
@@ -41,14 +46,14 @@ GameManager.prototype.setup = function () {
   if (previousState) {
     this.grid        = new Grid(previousState.grid.size,
                                 previousState.grid.cells); // Reload grid
-    window.gameRecord = previousState.record;
+    this.record      = previousState.record;
     this.score       = previousState.score;
     this.over        = previousState.over;
     this.won         = previousState.won;
     this.keepPlaying = previousState.keepPlaying;
   } else {
     this.grid        = new Grid(this.size);
-    window.gameRecord = [];
+    this.record      = [];
     this.score       = 0;
     this.over        = false;
     this.won         = false;
@@ -75,7 +80,7 @@ GameManager.prototype.addRandomTile = function () {
     var value = Math.random() < 0.9 ? 2 : 4;
     var tile = new Tile(this.grid.randomAvailableCell(), value);
 
-    window.gameRecord.push({
+    this.record.push({
       t: 'a',
       x: tile.x,
       y: tile.y,
@@ -113,7 +118,7 @@ GameManager.prototype.actuate = function () {
 GameManager.prototype.serialize = function () {
   return {
     grid:        this.grid.serialize(),
-    record:      window.gameRecord,
+    record:      this.record,
     score:       this.score,
     over:        this.over,
     won:         this.won,
@@ -151,7 +156,7 @@ GameManager.prototype.move = function (direction) {
   var traversals = this.buildTraversals(vector);
   var moved      = false;
 
-  window.gameRecord.push({
+  this.record.push({
     t: 'm',
     d: direction
   });

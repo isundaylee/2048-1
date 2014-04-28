@@ -134,7 +134,8 @@ KeyboardInputManager.prototype.restart = function (event) {
 };
 
 KeyboardInputManager.prototype.copyRecord = function (event) {
-  window.prompt("The record so far: ", btoa(JSON.stringify(window.gameRecord)));
+  event.preventDefault();
+  this.emit("copyRecord");
 }
 
 KeyboardInputManager.prototype.keepPlaying = function (event) {
